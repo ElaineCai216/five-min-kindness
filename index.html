@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6efe0">
+<title>五分钟善意 · 每天一个微小又温柔的挑战</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 27 C10 21 5 17 5 11.5 C5 7.5 8 5 11.5 5 C13.5 5 15 6 16 7.5 C17 6 18.5 5 20.5 5 C24 5 27 7.5 27 11.5 C27 17 22 21 16 27 Z' fill='%23c9774e'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#f4f0e2; --card:#fdfbf3; --ink:#3d3d30; --ink-soft:#6b6a5a;
+    --outline:#3d3d30; --mustard:#e3b34a; --olive:#8f923f; --sage:#8fa876;
+    --terra:#c97b54; --mauve:#b08ab0; --blue:#8fa8bc; --rose:#d98a8a;
+    --other:#c97b54; --world:#8f923f; --self:#b08ab0;
+    --shadow:6px 6px 0 rgba(61,61,48,.16), 0 18px 44px rgba(61,61,48,.10);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    background:var(--paper); color:var(--ink); overflow:hidden;
+    font-family:"Kaiti SC","KaiTi","STKaiti","DFKai-SB","BiauKai","Noto Serif SC","Songti SC",serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #ink{ position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+  .page{ position:relative; z-index:1; height:100%; display:flex; flex-direction:column;
+    padding:max(16px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)); }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; max-width:560px; width:100%; margin:0 auto; }
+  .brand{ display:flex; align-items:center; gap:10px; font-size:26px; letter-spacing:3px; color:var(--ink); user-select:none; }
+  .brand svg{ width:22px; height:22px; }
+  .iconbtn{
+    border:2.5px solid var(--outline); background:var(--card); cursor:pointer; font-family:inherit; color:var(--ink);
+    width:38px; height:38px; border-radius:50%; font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center;
+    box-shadow:2.5px 2.5px 0 var(--outline);
+    transition:background .25s, transform .15s; position:relative;
+  }
+  .iconbtn:hover{ background:#fff8e8; }
+  .iconbtn:active{ transform:scale(.9); }
+  .iconbtn.off{ color:#b3b09e; border-color:#b3b09e; box-shadow:2.5px 2.5px 0 #b3b09e; }
+  .iconbtn.off::after{ content:""; position:absolute; left:7px; right:7px; top:50%; height:2px; background:#b3b09e; transform:rotate(-40deg); }
+
+  .stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:14px 0 6px; min-height:0; overflow-y:auto; }
+
+  #card{
+    position:relative; width:min(460px, 94vw); padding:34px 30px 30px; text-align:center;
+    background:var(--card); border:3px solid var(--outline); border-radius:20px;
+    box-shadow:var(--shadow); transform:rotate(-.5deg);
+    animation:rise .8s cubic-bezier(.2,.8,.25,1) both;
+  }
+  @keyframes rise{ from{ opacity:0; transform:rotate(-.5deg) translateY(18px); } to{ opacity:1; transform:rotate(-.5deg) translateY(0); } }
+
+  .date{ font-size:14px; color:var(--ink-soft); letter-spacing:2px; margin-bottom:14px; user-select:none; }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:13px; padding:4px 14px 5px; border-radius:999px;
+    letter-spacing:2px; color:var(--card); border:2.5px solid var(--outline); box-shadow:2.5px 2.5px 0 var(--outline);
+    margin-bottom:18px; user-select:none;
+  }
+  .chip.other{ background:var(--other); } .chip.world{ background:var(--world); } .chip.self{ background:var(--self); }
+
+  #text{ font-size:22px; line-height:1.75; letter-spacing:1px; color:var(--ink); min-height:120px;
+    display:flex; align-items:center; justify-content:center; }
+  #text .ch{ display:inline-block; opacity:0; transform:translateY(10px); animation:in .5s ease forwards; }
+  @keyframes in{ to{ opacity:1; transform:none; } }
+  .ai-tag{ display:inline-block; font-size:11px; color:var(--terra); border:1.5px solid var(--terra); border-radius:999px; padding:1px 8px; margin-left:8px; vertical-align:2px; letter-spacing:1px; }
+
+  .actions{ display:flex; gap:18px; justify-content:center; align-items:center; margin-top:24px; flex-wrap:wrap; }
+  .btn{
+    border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:16px; letter-spacing:2px;
+    color:var(--ink); padding:9px 8px; position:relative; transition:color .2s, transform .15s, box-shadow .15s; user-select:none;
+  }
+  .btn:hover{ color:var(--terra); }
+  .btn:active{ transform:scale(.95); }
+  .btn.primary{
+    background:var(--ink); color:var(--card); border:3px solid var(--outline); border-radius:999px;
+    padding:11px 26px 12px; box-shadow:4px 4px 0 var(--mustard);
+  }
+  .btn.primary:hover{ background:#4a4a3a; color:var(--card); transform:translate(-1px,-1px); box-shadow:5px 5px 0 var(--mustard); }
+  .btn.primary.done{ background:var(--sage); box-shadow:4px 4px 0 var(--olive); }
+  .btn.underline{ border-bottom:3px solid var(--mustard); border-radius:0; padding:9px 4px 7px; }
+  .btn.underline:hover{ color:var(--terra); border-bottom-color:var(--terra); }
+  .btn:disabled{ opacity:.85; cursor:default; }
+
+  .streak{ margin-top:16px; font-size:13.5px; color:var(--ink-soft); letter-spacing:1px; min-height:20px; user-select:none; }
+
+  .sub{ display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+  .sub button{ border:none; background:transparent; cursor:pointer; font-family:inherit; font-size:13.5px; color:var(--ink-soft); letter-spacing:1px; padding:6px 2px; border-bottom:2px solid transparent; transition:color .2s, border-color .2s; }
+  .sub button:hover{ color:var(--terra); border-bottom-color:var(--mustard); }
+
+  #stamp{
+    position:absolute; left:50%; top:44%; transform:translate(-50%,-50%) rotate(-12deg) scale(2.4); opacity:0;
+    pointer-events:none; width:132px; height:132px; z-index:5;
+  }
+  #stamp.show{ animation:stamp .55s cubic-bezier(.2,.9,.3,1.2) forwards; }
+  @keyframes stamp{ 0%{ opacity:0; transform:translate(-50%,-50%) rotate(-12deg) scale(2.4); }
+    55%{ opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(.94); }
+    100%{ opacity:1; transform:translate(-50%,-50%) rotate(-12deg) scale(1); } }
+  #stamp .ring{ fill:none; stroke:var(--outline); stroke-width:3.5; stroke-dasharray:340; stroke-dashoffset:340; }
+  #stamp.show .ring{ animation:draw .5s .12s ease forwards; }
+  #stamp text{ font-family:inherit; fill:var(--outline); font-size:15px; letter-spacing:3px; }
+
+  .footer{ text-align:center; font-size:12.5px; color:var(--ink-soft); letter-spacing:2px; user-select:none; }
+  .footer .dot{ color:var(--mustard); }
+
+  #toast{
+    position:fixed; left:50%; bottom:64px; transform:translate(-50%,14px); z-index:40;
+    background:rgba(61,61,48,.94); color:#fdfbf3; font-size:14px; letter-spacing:1px;
+    padding:10px 20px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s;
+    max-width:86vw; text-align:center; box-shadow:4px 4px 0 rgba(61,61,48,.2);
+  }
+  #toast.show{ opacity:1; transform:translate(-50%,0); }
+
+  #selftest{
+    position:fixed; left:12px; bottom:12px; z-index:50; width:min(340px, calc(100vw - 24px));
+    background:rgba(253,251,243,.97); border:2px solid var(--outline); border-radius:14px; padding:14px 16px;
+    font-size:12.5px; line-height:1.9; color:var(--ink); box-shadow:4px 4px 0 rgba(61,61,48,.18); display:none; max-height:46vh; overflow:auto;
+  }
+  #selftest h4{ font-size:13px; letter-spacing:2px; margin-bottom:6px; }
+  #selftest .ok{ color:var(--olive); } #selftest .bad{ color:#b3543e; }
+  #selftest summary{ cursor:pointer; }
+
+  .loading::after{ content:""; display:inline-block; width:8px; height:8px; margin-left:8px; border-radius:50%;
+    border:2px solid currentColor; border-top-color:transparent; animation:spin .7s linear infinite; vertical-align:1px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  @media (max-width:420px){
+    #text{ font-size:19px; min-height:104px; }
+    #card{ padding:26px 20px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01s !important; transition-duration:.01s !important; }
+  }
+</style>
+</head>
+<body>
+<canvas id="ink" aria-hidden="true"></canvas>
+
+<div class="page">
+  <div class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 27 C10 21 5 17 5 11.5 C5 7.5 8 5 11.5 5 C13.5 5 15 6 16 7.5 C17 6 18.5 5 20.5 5 C24 5 27 7.5 27 11.5 C27 17 22 21 16 27 Z" fill="#c9774e"/></svg>
+      五分钟善意
+    </div>
+    <button id="soundBtn" class="iconbtn" title="声音开关" aria-label="声音开关">♪</button>
+  </div>
+
+  <div class="stage">
+    <div id="card">
+      <div class="date" id="dateLine"></div>
+      <div class="chip" id="chip"></div>
+      <div id="text"></div>
+      <div class="actions">
+        <button id="doneBtn" class="btn primary"></button>
+        <button id="nextBtn" class="btn underline">换一个</button>
+      </div>
+      <div class="streak" id="streakLine"></div>
+      <div class="sub">
+        <button id="aiBtn">让 AI 写</button>
+        <button id="shareBtn">分享今天这条</button>
+      </div>
+      <svg id="stamp" viewBox="0 0 140 140" aria-hidden="true">
+        <circle class="ring" cx="70" cy="70" r="58"/>
+        <circle class="ring" cx="70" cy="70" r="48" style="stroke-dasharray:300;stroke-dashoffset:300;animation-duration:.6s"/>
+        <text x="70" y="66" text-anchor="middle">今日已做</text>
+        <text x="70" y="88" text-anchor="middle" font-size="12">✓</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="footer">每天一个微小又温柔的挑战<span class="dot"> · </span>五分钟就够</div>
+</div>
+
+<div id="toast" role="status"></div>
+<details id="selftest" open><summary>自检结果</summary><div id="selftestBody"></div></details>
+
+<script>
+/* =========================================================
+   五分钟善意 · 单文件应用
+   纯逻辑（题库/轮换/打卡/自检）与浏览器部分分离，
+   便于在 Node 中直接抽取验证。
+   ========================================================= */
+"use strict";
+
+/*__PURE_START__*/
+const SEASONS = {
+  spring:{ months:[3,4,5], label:"春", hint:"春天" },
+  summer:{ months:[6,7,8], label:"夏", hint:"夏天" },
+  autumn:{ months:[9,10,11], label:"秋", hint:"秋天" },
+  winter:{ months:[12,1,2], label:"冬", hint:"冬天" },
+};
+const CATS = {
+  other:{ label:"对他人", color:"#c9774e" },
+  world:{ label:"对环境", color:"#7a8f68" },
+  self:{ label:"对自己", color:"#8a6f8f" },
+};
+const WEEKDAY_CN = ["日","一","二","三","四","五","六"];
+
+// RAW: [文案, 类别, 季节[], 周末专属?]
+const RAW = [
+  /* —— 对他人 · 春 —— */
+  ["给很久没联系的朋友，随手拍一张路边刚开的花发过去，不用等回复。","other",["spring"]],
+  ["在群里看到没人回答的问题，认真回一条你知道的答案。","other",["spring"]],
+  ["给家人发一句「今天天气很好，记得开窗」。","other",["spring"]],
+  ["电梯快关上时，伸手帮后面的人挡一下门。","other",["spring"]],
+  ["对每天见面的门卫或保洁，认真说一声「早上好」。","other",["spring"]],
+  ["给一位朋友的动态留一条真诚的评论，不只是点个赞。","other",["spring"]],
+  ["把伞借给没带伞的人，如果方便的话。","other",["spring"]],
+  ["给常去的早餐店老板说一句「今天的包子很好吃」。","other",["spring"]],
+  ["给小时候照顾过你的长辈打一个 3 分钟的电话。","other",["spring"],1],
+  /* —— 对他人 · 夏 —— */
+  ["请同乘电梯的人先出，自己最后走。","other",["summer"]],
+  ["给外卖或快递小哥递一杯水，如果手边有。","other",["summer"],1],
+  ["在路口对让行的司机点点头或竖个大拇指。","other",["summer"]],
+  ["给朋友发一张今天的晚霞，附一句「希望你那边也好看」。","other",["summer"]],
+  ["帮身后的陌生人扶一下门，等他进来再松手。","other",["summer"]],
+  ["给正在忙的同事留一张「辛苦了」的小纸条。","other",["summer"]],
+  ["便利店排队时，让赶时间的人先结账。","other",["summer"]],
+  ["给许久未见的朋友发一句「最近好吗，就是突然想到你」。","other",["summer"]],
+  ["把多买的一瓶冰水送给看起来热的人。","other",["summer"],1],
+  /* —— 对他人 · 秋 —— */
+  ["拍一张路边的落叶发给家人，说「秋天到了」。","other",["autumn"]],
+  ["给朋友发一张风景照，不用写很多字。","other",["autumn"]],
+  ["在地铁或公交上，把座位让给更需要的人。","other",["autumn"]],
+  ["给教过你的老师发一句季节问候。","other",["autumn"]],
+  ["认真听一个人把话说完，不打断。","other",["autumn"]],
+  ["给邻居门口放一颗糖果或一张小纸条。","other",["autumn"],1],
+  ["把看到的一篇好文章，分享给刚好需要的人。","other",["autumn"]],
+  ["对收银员说谢谢时，看着对方的眼睛。","other",["autumn"]],
+  ["给很久没聊的老朋友发一张你窗外的秋景。","other",["autumn"]],
+  /* —— 对他人 · 冬 —— */
+  ["给家人发一句「降温了，记得加衣服」。","other",["winter"]],
+  ["把热饮递给双手冰凉的朋友或同事，如果方便。","other",["winter"],1],
+  ["在电梯里主动按下别人要去的楼层。","other",["winter"]],
+  ["对快递员说一声「辛苦了，天冷注意保暖」。","other",["winter"]],
+  ["给朋友发一张今天的暖阳照片，配一句「晒到你那边了吗」。","other",["winter"]],
+  ["帮提着很多东西的人按电梯或开门。","other",["winter"]],
+  ["给群里的新人发一句欢迎的话，让他不那么尴尬。","other",["winter"]],
+  ["给一年没联系的人发一条简单的问候。","other",["winter"],1],
+  ["给远方的朋友发一张你窗外的冬日天空，说「想你了」。","other",["winter"]],
+  /* —— 对环境 · 春 —— */
+  ["给路边的植物浇一点水，半瓶就好。","world",["spring"]],
+  ["把被风吹倒的小树苗或花盆轻轻扶正。","world",["spring"]],
+  ["捡起路上的一片垃圾，放进垃圾桶。","world",["spring"]],
+  ["给窗台的绿植擦一擦叶子上的灰。","world",["spring"]],
+  ["蹲下来看一朵花 30 秒，记住它的颜色。","world",["spring"]],
+  ["把掉落的花枝捡起来，插进路边的草丛。","world",["spring"],1],
+  ["把喝完的塑料瓶压扁，扔进可回收桶。","world",["spring"]],
+  ["在安静角落给流浪猫放一小碗清水。","world",["spring"],1],
+  ["拍一张今天最绿的地方，存进相册。","world",["spring"]],
+  /* —— 对环境 · 夏 —— */
+  ["给楼下的树浇一桶水，如果允许也需要。","world",["summer"]],
+  ["把挡在人行道中间的石块踢到不挡路的地方。","world",["summer"]],
+  ["在树荫下坐 5 分钟，什么都不做，只感受风。","world",["summer"]],
+  ["捡起地上被丢弃的塑料袋，收好扔进垃圾桶。","world",["summer"]],
+  ["把阳台上的植物移到晒不到正午太阳的地方。","world",["summer"]],
+  ["雨后，用叶子把积水洼里困住的小虫轻轻救出来。","world",["summer"],1],
+  ["把空调调高一度，让地球凉快一点。","world",["summer"]],
+  ["把喝完的易拉罐踩扁，放进回收桶。","world",["summer"]],
+  ["观察一只蚂蚁搬东西 1 分钟，不要打扰它。","world",["summer"]],
+  /* —— 对环境 · 秋 —— */
+  ["捡一片最喜欢的落叶，夹进书里。","world",["autumn"]],
+  ["把路边的落叶扫成一堆，让风来吹散。","world",["autumn"],1],
+  ["给院里的植物浇最后一次秋水。","world",["autumn"]],
+  ["把掉在路上的果子挪到路边，不让人踩到。","world",["autumn"]],
+  ["抬头看 30 秒秋天的云，记住它的形状。","world",["autumn"]],
+  ["把空瓶子放进回收箱，而不是随手丢。","world",["autumn"]],
+  ["给窗台的小鸟留一点面包屑。","world",["autumn"],1],
+  ["把枯萎的盆栽清理干净，重新松土。","world",["autumn"]],
+  ["捡起公园长椅旁的垃圾，扔进垃圾桶。","world",["autumn"]],
+  /* —— 对环境 · 冬 —— */
+  ["给窗台的植物擦掉积灰，让它晒到冬日的暖阳。","world",["winter"]],
+  ["在避风处给流浪猫放一碗温水。","world",["winter"],1],
+  ["提醒身边的人注意脚下路滑。","world",["winter"]],
+  ["把被风吹到路中间的树枝，捡到路边。","world",["winter"]],
+  ["给家里的绿植浇一次水，它可能渴了很久。","world",["winter"]],
+  ["把旧电池收好，下次送去回收点。","world",["winter"],1],
+  ["拍一张冬天的天空存下来，等春天对比。","world",["winter"]],
+  ["把暖气调低一度，省一点电。","world",["winter"]],
+  ["把枯叶从排水口清理开，让雨水能流走。","world",["winter"]],
+  /* —— 对自己 · 春 —— */
+  ["喝一杯温水，慢慢喝完。","self",["spring"]],
+  ["打开窗，深呼吸 5 次，闻一闻春天的空气。","self",["spring"]],
+  ["对着镜子说一句「今天也辛苦了」。","self",["spring"]],
+  ["写下今天想完成的一件小事，然后完成它。","self",["spring"],1],
+  ["把桌面收拾出一小块空地，只放一杯水。","self",["spring"]],
+  ["出门走 5 分钟，不看手机。","self",["spring"]],
+  ["涂一点护手霜，好好照顾自己的手。","self",["spring"]],
+  ["把手机屏幕调暗一点，让眼睛休息。","self",["spring"]],
+  ["记录今天一个让你微笑的瞬间。","self",["spring"]],
+  /* —— 对自己 · 夏 —— */
+  ["吃一片西瓜或喝一杯水，慢慢享受。","self",["summer"]],
+  ["午休时闭眼 3 分钟，什么都不想。","self",["summer"]],
+  ["用凉水洗把脸，清醒一下。","self",["summer"]],
+  ["把一件拖了很久、5 分钟能做完的事做掉。","self",["summer"],1],
+  ["在树荫下站一会儿，感受影子里的凉。","self",["summer"]],
+  ["写下今天最热的时候，你是什么感觉。","self",["summer"]],
+  ["拉伸肩膀 3 分钟，转一转脖子。","self",["summer"]],
+  ["睡前把手机放到够不着的地方。","self",["summer"]],
+  ["给自己扇扇风，好好凉快一下。","self",["summer"]],
+  /* —— 对自己 · 秋 —— */
+  ["泡一杯热茶，捧在手心 3 分钟。","self",["autumn"]],
+  ["写下三件今天值得感谢的小事。","self",["autumn"]],
+  ["把秋天的第一片落叶夹进本子里，写上日期。","self",["autumn"]],
+  ["整理一个抽屉或书架的一格。","self",["autumn"],1],
+  ["出门踩一踩落叶，听那个声音。","self",["autumn"]],
+  ["给下周的自己留一句鼓励的话。","self",["autumn"]],
+  ["今晚早睡 20 分钟。","self",["autumn"]],
+  ["穿一件最喜欢的衣服出门。","self",["autumn"]],
+  ["关掉屏幕，看窗外 5 分钟。","self",["autumn"]],
+  /* —— 对自己 · 冬 —— */
+  ["喝一杯热水，捂一捂手。","self",["winter"]],
+  ["晒 5 分钟冬日的太阳，闭上眼睛。","self",["winter"]],
+  ["泡一泡脚或洗个热水澡，让身体暖起来。","self",["winter"]],
+  ["写下今年冬天想完成的一件小事。","self",["winter"],1],
+  ["戴好围巾手套再出门，好好照顾自己。","self",["winter"]],
+  ["给自己倒一杯热饮，慢慢喝。","self",["winter"]],
+  ["睡前做 5 次深呼吸，让心静下来。","self",["winter"]],
+  ["整理一件旧物，收好或送人。","self",["winter"],1],
+  ["对自己说一句「这一年，你辛苦了」。","self",["winter"]],
+];
+
+const LIBRARY = RAW.map((r, i) => ({
+  id: "k" + i,
+  text: r[0],
+  cat: r[1],
+  seasons: r[2],
+  weekend: r[3] === 1,
+}));
+
+function hashStr(s){
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
+function toDateKey(d){ return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+function dateKeyToDate(key){
+  const p = key.split("-").map(Number);
+  return new Date(p[0], p[1] - 1, p[2]);
+}
+function addDaysKey(key, delta){
+  const d = dateKeyToDate(key);
+  d.setDate(d.getDate() + delta);
+  return toDateKey(d);
+}
+function seasonOf(key){
+  const m = dateKeyToDate(key).getMonth() + 1;
+  for (const s of Object.keys(SEASONS)) if (SEASONS[s].months.includes(m)) return s;
+  return "spring";
+}
+function isWeekendKey(key){
+  const d = dateKeyToDate(key).getDay();
+  return d === 0 || d === 6;
+}
+function weekdayLabel(key){ return "周" + WEEKDAY_CN[dateKeyToDate(key).getDay()]; }
+function dateLabelCN(key){
+  const d = dateKeyToDate(key);
+  return d.getMonth() + 1 + "月" + d.getDate() + "日";
+}
+function eligiblePool(season, weekend){
+  return LIBRARY.filter(x => x.seasons.includes(season) && (!x.weekend || weekend));
+}
+function pickIndex(dateKey, offset){
+  const pool = eligiblePool(seasonOf(dateKey), isWeekendKey(dateKey));
+  if (!pool.length) return null;
+  return pool[hashStr(dateKey + "#" + offset) % pool.length];
+}
+function pickChallenge(dateKey, offset){
+  const idx = pickIndex(dateKey, offset);
+  return idx ? { challenge: idx, offset } : null;
+}
+// doneSet: Set of "YYYY-MM-DD"。今天没做时，从昨天往前数连续天数。
+function computeStreak(doneSet, dateKey){
+  let cursor = doneSet.has(dateKey) ? dateKey : addDaysKey(dateKey, -1);
+  let n = 0;
+  while (doneSet.has(cursor)){ n++; cursor = addDaysKey(cursor, -1); }
+  return n;
+}
+
+function validateLibrary(){
+  const errors = [];
+  const counts = {};
+  const seen = new Map();
+  const total = LIBRARY.length;
+  for (const x of LIBRARY){
+    if (typeof x.text !== "string" || !x.text.trim()) errors.push("空文案: " + x.id);
+    if (!CATS[x.cat]) errors.push("非法类别: " + x.id + " -> " + x.cat);
+    if (!Array.isArray(x.seasons) || !x.seasons.length) errors.push("缺少季节: " + x.id);
+    else for (const s of x.seasons) if (!SEASONS[s]) errors.push("非法季节: " + x.id + " -> " + s);
+    if (typeof x.weekend !== "boolean") errors.push("weekend 非布尔: " + x.id);
+    const t = x.text.trim();
+    if (seen.has(t)) errors.push("重复文案: " + t);
+    seen.set(t, x.id);
+    for (const s of (x.seasons || [])){ counts[s] = counts[s] || {}; counts[s][x.cat] = (counts[s][x.cat] || 0) + 1; }
+  }
+  for (const s of Object.keys(SEASONS)){
+    for (const c of Object.keys(CATS)){
+      const n = (counts[s] && counts[s][c]) || 0;
+      if (n < 7) errors.push(s + "/" + c + " 仅 " + n + " 条（要求 ≥7）");
+    }
+  }
+  return { ok: errors.length === 0, errors, counts, total };
+}
+
+function runSelfTest(){
+  const checks = [];
+  const lib = validateLibrary();
+  checks.push({ name: "题库完整性", pass: lib.ok, detail: lib.ok ? "共 " + lib.total + " 条，每季每类 ≥7" : lib.errors.join("；") });
+  const d1 = pickChallenge("2026-08-20", 0), d2 = pickChallenge("2026-08-20", 0);
+  checks.push({ name: "同日确定性", pass: d1.challenge.id === d2.challenge.id, detail: d1.challenge.text });
+  const sp = pickChallenge("2026-04-10", 0), su = pickChallenge("2026-07-10", 0);
+  checks.push({ name: "季节轮换生效", pass: sp.challenge.seasons.includes("spring") && su.challenge.seasons.includes("summer"), detail: "春:" + sp.challenge.text + " / 夏:" + su.challenge.text });
+  const sat = pickChallenge("2026-08-15", 0), sun = pickChallenge("2026-08-16", 0);
+  const wk = [sat, sun].every(p => p.challenge.seasons.includes("summer"));
+  checks.push({ name: "周末池可用", pass: wk, detail: "周六:" + sat.challenge.text + " / 周日:" + sun.challenge.text });
+  const alt = pickChallenge("2026-08-20", 3);
+  checks.push({ name: "换一个可用", pass: alt.challenge.id !== d1.challenge.id, detail: alt.challenge.text });
+  const streak = computeStreak(new Set(["2026-08-18","2026-08-19","2026-08-20"]), "2026-08-20");
+  checks.push({ name: "连续打卡计算", pass: streak === 3, detail: "连续 " + streak + " 天" });
+  const broken = computeStreak(new Set(["2026-08-18","2026-08-20"]), "2026-08-20");
+  checks.push({ name: "断档清零", pass: broken === 1, detail: "断档后连续 " + broken + " 天" });
+  return { ok: checks.every(c => c.pass), checks };
+}
+/*__PURE_END__*/
+
+/* ===================== 浏览器部分 ===================== */
+(function(){
+  const $ = s => document.querySelector(s);
+  const params = new URLSearchParams(location.search);
+
+  // —— 日期：默认今天，支持 ?date=YYYY-MM-DD 调试 ——
+  const forcedDate = params.get("date");
+  const dateKey = (forcedDate && /^\d{4}-\d{2}-\d{2}$/.test(forcedDate)) ? forcedDate : toDateKey(new Date());
+  const season = seasonOf(dateKey);
+  const weekend = isWeekendKey(dateKey);
+
+  // —— 存储（file:// 或隐私模式可能抛错，回退内存） ——
+  const mem = {};
+  const store = {
+    get(k, dflt){
+      try { const v = localStorage.getItem(k); return v == null ? dflt : v; } catch(e){ return mem[k] != null ? mem[k] : dflt; }
+    },
+    set(k, v){
+      try { localStorage.setItem(k, v); } catch(e){ mem[k] = v; }
+    },
+  };
+  const SOUND_KEY = "five-min-kindness:sound";
+  const DONE_KEY = "five-min-kindness:v1";
+
+  let soundOn = store.get(SOUND_KEY, "1") === "1";
+  let doneSet = new Set();
+  try {
+    const raw = store.get(DONE_KEY, "");
+    if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) doneSet = new Set(arr); }
+  } catch(e){}
+
+  let offset = 0;
+  let curText = "";
+  let curCat = "";
+  let fromAi = false;
+
+  /* ---------- 声音 ---------- */
+  let AC = null, musicTimer = 0, musicOn = false;
+  function getCtx(){
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    if (!AC) AC = new C();
+    if (AC.state === "suspended") AC.resume();
+    return AC;
+  }
+  function tone({ freq = 440, type = "sine", dur = 0.15, vol = 0.1, delay = 0, slide = 0, filter = 0 } = {}){
+    const ac = getCtx(); if (!ac || !soundOn) return;
+    const t0 = ac.currentTime + delay;
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    let out = osc;
+    if (filter > 0){ const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filter; f.Q.value = 0.6; osc.connect(f); out = f; }
+    out.connect(g); g.connect(ac.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.06);
+  }
+  function noiseBurst({ dur = 0.3, vol = 0.06, delay = 0, fFrom = 600, fTo = 2400 } = {}){
+    const ac = getCtx(); if (!ac || !soundOn) return;
+    const t0 = ac.currentTime + delay;
+    const len = Math.max(1, Math.floor(ac.sampleRate * dur));
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 0.9;
+    f.frequency.setValueAtTime(fFrom, t0);
+    f.frequency.exponentialRampToValueAtTime(fTo, t0 + dur);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(ac.destination);
+    src.start(t0); src.stop(t0 + dur + 0.06);
+  }
+  const sfxHover = () => tone({ freq: 620 + Math.random() * 140, type: "triangle", dur: 0.05, vol: 0.028 });
+  const sfxClick = () => { tone({ freq: 500, type: "triangle", dur: 0.08, vol: 0.08 }); noiseBurst({ dur: 0.04, vol: 0.03, fFrom: 1800, fTo: 900 }); };
+  const sfxSwap = () => { tone({ freq: 360, type: "sine", dur: 0.12, vol: 0.07, slide: 240, filter: 1600 }); };
+  const sfxStamp = () => { tone({ freq: 210, type: "triangle", dur: 0.09, vol: 0.14, filter: 700 }); noiseBurst({ dur: 0.06, vol: 0.09, fFrom: 2600, fTo: 500 }); };
+  const sfxDing = () => { tone({ freq: 660, type: "sine", dur: 0.5, vol: 0.06, delay: 0.06, filter: 2200 }); tone({ freq: 990, type: "sine", dur: 0.6, vol: 0.05, delay: 0.18, filter: 2400 }); };
+  const sfxAi = () => { tone({ freq: 520, type: "triangle", dur: 0.1, vol: 0.07, delay: 0 }); tone({ freq: 780, type: "triangle", dur: 0.12, vol: 0.06, delay: 0.1 }); tone({ freq: 1040, type: "triangle", dur: 0.16, vol: 0.05, delay: 0.2, filter: 2600 }); };
+
+  const CHORDS = [
+    { bass: 130.8, notes: [261.6, 329.6, 392.0] },   // C
+    { bass: 98.0,  notes: [196.0, 246.9, 392.0] },   // G
+    { bass: 110.0, notes: [220.0, 261.6, 329.6] },   // Am
+    { bass: 87.3,  notes: [174.6, 220.0, 261.6] },   // F
+  ];
+  function scheduleMusic(from){
+    if (!musicOn) return;
+    const ac = AC; if (!ac) return;
+    let t = from;
+    for (const c of CHORDS){
+      tone({ freq: c.bass, type: "sine", dur: 3.8, vol: 0.045, delay: t - ac.currentTime, filter: 900 });
+      c.notes.forEach((f, i) => tone({ freq: f, type: "triangle", dur: 3.0, vol: 0.026, delay: t - ac.currentTime + i * 1.15, filter: 1500 }));
+      t += 4.8;
+    }
+    musicTimer = setTimeout(() => scheduleMusic(t), 4800 * CHORDS.length + 240);
+  }
+  function setSound(on){
+    soundOn = on;
+    store.set(SOUND_KEY, on ? "1" : "0");
+    $("#soundBtn").classList.toggle("off", !on);
+    $("#soundBtn").textContent = on ? "♪" : "♪";
+    const ac = getCtx();
+    if (on && !musicOn && ac){ musicOn = true; scheduleMusic(ac.currentTime + 0.4); }
+    if (!on && musicOn){ musicOn = false; clearTimeout(musicTimer); }
+    if (on) sfxClick();
+  }
+
+  /* ---------- 渲染 ---------- */
+  const $date = $("#dateLine"), $chip = $("#chip"), $text = $("#text"),
+        $done = $("#doneBtn"), $next = $("#nextBtn"), $streak = $("#streakLine"),
+        $stamp = $("#stamp"), $ai = $("#aiBtn");
+
+  function setChip(cat){
+    $chip.textContent = CATS[cat].label;
+    $chip.className = "chip " + cat;
+  }
+  function showText(t, animate){
+    $text.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    for (const ch of t){
+      const s = document.createElement("span");
+      s.className = "ch";
+      s.textContent = ch;
+      frag.appendChild(s);
+    }
+    $text.appendChild(frag);
+    if (animate){
+      [...$text.children].forEach((el, i) => { el.style.animationDelay = (i * 0.03) + "s"; });
+    } else {
+      [...$text.children].forEach(el => { el.style.animation = "none"; el.style.opacity = 1; });
+    }
+  }
+  function render(){
+    const p = pickChallenge(dateKey, offset);
+    const ch = p.challenge;
+    curText = ch.text; curCat = ch.cat; fromAi = false;
+    setChip(ch.cat);
+    showText(ch.text, true);
+    $date.textContent = dateLabelCN(dateKey) + " · " + weekdayLabel(dateKey) + " · " + SEASONS[season].label + (offset ? " · 备选 " + offset : "");
+    const doneToday = doneSet.has(dateKey);
+    $done.textContent = doneToday ? "今日已做 ✓" : "今天做过了";
+    $done.disabled = doneToday;
+    $done.classList.toggle("done", doneToday);
+    $stamp.classList.toggle("show", doneToday);
+    const streak = computeStreak(doneSet, dateKey);
+    if (doneToday) $streak.textContent = "已连续 " + streak + " 天 · 善意在悄悄积累";
+    else if (streak > 0) $streak.textContent = "已连续 " + streak + " 天 · 今天还没开始，做点什么都可以";
+    else $streak.textContent = "今天还没开始，做点什么都可以";
+    $ai.textContent = "让 AI 写";
+  }
+  function nextChallenge(){
+    offset = (offset + 1) % 6;
+    const p = pickChallenge(dateKey, offset);
+    const ch = p.challenge;
+    curText = ch.text; curCat = ch.cat; fromAi = false;
+    setChip(ch.cat);
+    showText(ch.text, true);
+    $date.textContent = dateLabelCN(dateKey) + " · " + weekdayLabel(dateKey) + " · " + SEASONS[season].label + (offset ? " · 备选 " + offset : "");
+    sfxSwap();
+  }
+
+  /* ---------- Toast ---------- */
+  let toastTimer = 0;
+  function toast(msg){
+    const t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+  }
+
+  /* ---------- 事件 ---------- */
+  $done.addEventListener("click", () => {
+    sfxStamp();
+    setTimeout(sfxDing, 120);
+    doneSet.add(dateKey);
+    try {
+      const arr = [...doneSet].sort();
+      store.set(DONE_KEY, JSON.stringify(arr));
+    } catch(e){}
+    render();
+  });
+  $next.addEventListener("click", () => { sfxClick(); nextChallenge(); });
+  $ai.addEventListener("click", async () => {
+    sfxClick();
+    const WORKER_URL = "";
+    if (!WORKER_URL){
+      toast("AI 还没接好，先给你换一条本地挑战");
+      nextChallenge();
+      return;
+    }
+    $ai.classList.add("loading");
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateKey, season, category: curCat }),
+      });
+      if (!res.ok) throw new Error("bad status");
+      const data = await res.json();
+      if (!data.text || typeof data.text !== "string") throw new Error("no text");
+      curText = data.text.trim(); fromAi = true;
+      setChip(curCat);
+      showText(curText, true);
+      const tag = document.createElement("span");
+      tag.className = "ai-tag"; tag.textContent = "AI";
+      $text.appendChild(tag);
+      $date.textContent = dateLabelCN(dateKey) + " · " + weekdayLabel(dateKey) + " · " + SEASONS[season].label + " · 灵感来自 AI";
+      sfxAi();
+      toast("AI 写的挑战，看看合不合心意");
+    } catch(e){
+      toast("AI 暂时没回应，换一条本地挑战给你");
+      nextChallenge();
+    } finally {
+      $ai.classList.remove("loading");
+    }
+  });
+  $("#shareBtn").addEventListener("click", async () => {
+    sfxClick();
+    const text = "今天的五分钟善意：" + curText + "（" + CATS[curCat].label + "）";
+    if (navigator.share){
+      try { await navigator.share({ text }); return; } catch(e){}
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("已复制，去发给朋友吧");
+    } catch(e){
+      toast("长按上方文字即可复制");
+    }
+  });
+  $("#soundBtn").addEventListener("click", () => setSound(!soundOn));
+
+  document.querySelectorAll("button").forEach(b => {
+    b.addEventListener("mouseenter", sfxHover);
+    b.addEventListener("pointerdown", sfxClick);
+  });
+
+  /* ---------- 动态编辑插画背景 ----------
+     扁平色块 + 粗描边（参考 Editorial Illustration）：太阳 / 云朵 / 新芽 / 浇水壶 / 爱心 /
+     茶杯 / 信封 / 星星 / 花 / 叶子 / 色块，漂浮摆动；远景小山与色块缓慢呼吸；
+     中央卡片是禁区，图形碰到会弹开。 */
+  const canvas = $("#ink");
+  const ctx = canvas.getContext("2d");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W = 0, H = 0, dpr = 1;
+  const C = {
+    ink: "#3d3d30", mustard: "#e3b34a", olive: "#8f923f", sage: "#8fa876",
+    terra: "#c97b54", mauve: "#b08ab0", blue: "#8fa8bc", rose: "#d98a8a",
+    cream: "#fdfbf3", beige: "#e8c9a0",
+  };
+  const rand = (a, b) => a + Math.random() * (b - a);
+  let shapes = [], fields = [], grains = [], anchors = [];
+  let keepOut = { x0: 0, y0: 0, x1: 0, y1: 0 };
+
+  function computeKeepOut(){
+    const r = $("#card").getBoundingClientRect();
+    const m = Math.max(16, Math.min(W, H) * 0.03);
+    return { x0: r.left - m, y0: r.top - m, x1: r.right + m, y1: r.bottom + m };
+  }
+
+  const SHAPES = {
+    sun(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineCap = "round"; c.lineJoin = "round";
+      c.fillStyle = C.mustard; c.strokeStyle = C.ink;
+      for (let i = 0; i < 8; i++){
+        c.save(); c.rotate(i * Math.PI / 4);
+        c.beginPath();
+        c.moveTo(s * 1.12, -s * 0.17); c.lineTo(s * 1.58, -s * 0.17);
+        c.lineTo(s * 1.58, s * 0.17); c.lineTo(s * 1.12, s * 0.17);
+        c.closePath(); c.fill(); c.stroke();
+        c.restore();
+      }
+      c.beginPath(); c.arc(0, 0, s, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.restore();
+    },
+    cloud(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineJoin = "round"; c.lineCap = "round";
+      c.fillStyle = "#f2efe2"; c.strokeStyle = C.ink;
+      c.beginPath();
+      c.arc(-s * 0.45, s * 0.08, s * 0.4, Math.PI * 0.5, Math.PI * 1.5);
+      c.arc(-s * 0.06, -s * 0.26, s * 0.52, Math.PI * 0.6, Math.PI * 1.45);
+      c.arc(s * 0.4, -s * 0.08, s * 0.4, Math.PI * 0.75, Math.PI * 1.6);
+      c.arc(s * 0.62, s * 0.18, s * 0.32, Math.PI * 0.9, Math.PI * 1.9);
+      c.closePath(); c.fill(); c.stroke();
+      c.restore();
+    },
+    sprout(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.14); c.lineCap = "round"; c.lineJoin = "round";
+      c.strokeStyle = C.ink;
+      c.beginPath(); c.moveTo(0, s); c.quadraticCurveTo(-s * 0.1, -s * 0.1, s * 0.05, -s * 0.85); c.stroke();
+      c.fillStyle = C.olive;
+      c.beginPath(); c.moveTo(s * 0.05, -s * 0.8);
+      c.quadraticCurveTo(s * 0.9, -s * 0.75, s * 0.95, -s * 0.12);
+      c.quadraticCurveTo(s * 0.45, -s * 0.15, s * 0.05, -s * 0.5);
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(s * 0.05, -s * 0.75);
+      c.quadraticCurveTo(-s * 0.7, -s * 0.95, -s * 0.95, -s * 0.35);
+      c.quadraticCurveTo(-s * 0.45, -s * 0.2, s * 0.05, -s * 0.42);
+      c.closePath(); c.fill(); c.stroke();
+      c.restore();
+    },
+    can(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round"; c.lineCap = "round";
+      c.fillStyle = C.terra; c.strokeStyle = C.ink;
+      c.beginPath();
+      c.moveTo(-s * 0.7, -s * 0.05); c.lineTo(s * 0.5, -s * 0.05);
+      c.lineTo(s * 0.55, s * 0.45); c.lineTo(-s * 0.65, s * 0.5);
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath();
+      c.moveTo(s * 0.5, -s * 0.05); c.lineTo(s * 0.95, -s * 0.35);
+      c.lineTo(s * 1.0, -s * 0.15); c.lineTo(s * 0.55, s * 0.15);
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = C.blue;
+      c.beginPath(); c.arc(s * 1.02, -s * 0.38, s * 0.1, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(-s * 0.35, -s * 0.1, s * 0.32, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      c.restore();
+    },
+    heart(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round";
+      c.fillStyle = C.rose; c.strokeStyle = C.ink;
+      c.beginPath();
+      c.moveTo(0, s * 0.85);
+      c.bezierCurveTo(-s * 1.15, 0, -s * 0.7, -s * 0.95, 0, -s * 0.3);
+      c.bezierCurveTo(s * 0.7, -s * 0.95, s * 1.15, 0, 0, s * 0.85);
+      c.closePath(); c.fill(); c.stroke();
+      c.restore();
+    },
+    cup(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineJoin = "round"; c.lineCap = "round";
+      c.fillStyle = C.blue; c.strokeStyle = C.ink;
+      c.beginPath();
+      c.moveTo(-s * 0.55, -s * 0.5); c.lineTo(s * 0.55, -s * 0.5);
+      c.lineTo(s * 0.4, s * 0.5); c.lineTo(-s * 0.4, s * 0.5);
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.arc(s * 0.55, 0, s * 0.22, -Math.PI * 0.45, Math.PI * 0.45); c.stroke();
+      c.lineWidth = Math.max(2, s * 0.1);
+      c.beginPath(); c.moveTo(-s * 0.15, -s * 0.75); c.quadraticCurveTo(-s * 0.28, -s * 0.95, -s * 0.12, -s * 1.1); c.stroke();
+      c.beginPath(); c.moveTo(s * 0.15, -s * 0.75); c.quadraticCurveTo(s * 0.02, -s * 0.95, s * 0.18, -s * 1.1); c.stroke();
+      c.restore();
+    },
+    mail(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.11); c.lineJoin = "round"; c.lineCap = "round";
+      c.fillStyle = C.beige; c.strokeStyle = C.ink;
+      c.beginPath();
+      c.moveTo(-s, -s * 0.6); c.lineTo(s, -s * 0.6); c.lineTo(s, s * 0.6); c.lineTo(-s, s * 0.6);
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(-s, -s * 0.6); c.lineTo(0, -s * 0.05); c.lineTo(s, -s * 0.6); c.stroke();
+      c.beginPath(); c.moveTo(-s, s * 0.6); c.lineTo(-s * 0.15, 0); c.moveTo(s, s * 0.6); c.lineTo(s * 0.15, 0); c.stroke();
+      c.restore();
+    },
+    star(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round";
+      c.fillStyle = C.mustard; c.strokeStyle = C.ink;
+      c.beginPath();
+      for (let i = 0; i < 10; i++){
+        const r = i % 2 === 0 ? s : s * 0.45;
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        i === 0 ? c.moveTo(Math.cos(a) * r, Math.sin(a) * r) : c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      c.closePath(); c.fill(); c.stroke();
+      c.restore();
+    },
+    flower(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineJoin = "round";
+      c.fillStyle = C.mauve; c.strokeStyle = C.ink;
+      for (let i = 0; i < 5; i++){
+        c.save(); c.rotate(i * Math.PI * 2 / 5);
+        c.beginPath(); c.ellipse(0, -s * 0.62, s * 0.3, s * 0.42, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.restore();
+      }
+      c.fillStyle = C.mustard;
+      c.beginPath(); c.arc(0, 0, s * 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.restore();
+    },
+    leaf(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round"; c.lineCap = "round";
+      c.fillStyle = C.olive; c.strokeStyle = C.ink;
+      c.beginPath();
+      c.moveTo(-s, 0); c.quadraticCurveTo(-s * 0.2, -s * 1.1, s * 0.9, -s * 0.15);
+      c.quadraticCurveTo(0, s * 0.9, -s, 0);
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(-s * 0.75, s * 0.05); c.quadraticCurveTo(0, 0, s * 0.7, -s * 0.05); c.stroke();
+      c.restore();
+    },
+    blob(c, s){
+      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round";
+      c.fillStyle = C.sage; c.strokeStyle = C.ink;
+      c.beginPath();
+      const pts = 7;
+      for (let i = 0; i < pts; i++){
+        const a = (i / pts) * Math.PI * 2;
+        const r = s * (0.8 + 0.3 * Math.sin(i * 2.7));
+        i === 0 ? c.moveTo(Math.cos(a) * r, Math.sin(a) * r) : c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      c.closePath(); c.fill(); c.stroke();
+      c.restore();
+    },
+  };
+  const TYPES = Object.keys(SHAPES);
+
+  function spawnFields(){
+    const m = Math.min(W, H);
+    fields = [
+      { x: W * 0.1, y: H * 0.12, r: m * 0.36, color: C.mustard, alpha: 0.10, phase: rand(0, 6) },
+      { x: W * 0.92, y: H * 0.88, r: m * 0.4, color: C.blue, alpha: 0.09, phase: rand(0, 6) },
+      { x: W * 0.82, y: H * 0.16, r: m * 0.2, color: C.mauve, alpha: 0.07, phase: rand(0, 6) },
+      { x: W * 0.12, y: H * 0.86, r: m * 0.24, color: C.sage, alpha: 0.08, phase: rand(0, 6) },
+    ];
+  }
+  function drawFields(t){
+    for (const f of fields){
+      ctx.globalAlpha = f.alpha * (0.85 + 0.15 * Math.sin(t * 0.0004 + f.phase));
+      ctx.fillStyle = f.color;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 远景小山：扁平色块，缓慢左右摆动
+  function drawHills(t){
+    const sway = Math.sin(t * 0.0002) * 8;
+    ctx.fillStyle = C.olive; ctx.globalAlpha = 0.16;
+    ctx.beginPath(); ctx.arc(W * 0.26 + sway * 0.5, H + 70, W * 0.5, Math.PI, 0); ctx.fill();
+    ctx.beginPath(); ctx.arc(W * 0.86 - sway * 0.5, H + 100, W * 0.55, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = C.sage; ctx.globalAlpha = 0.22;
+    ctx.beginPath(); ctx.arc(W * 0.55 + sway, H + 50, W * 0.42, Math.PI, 0); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  function spawnAnchors(){
+    anchors = [];
+    const m = Math.min(W, H);
+    const cands = [
+      { type: 'sun',    x: W * 0.9, y: H * 0.14, size: m * 0.11, alpha: 0.95 },
+      { type: 'cloud',  x: W * 0.1, y: H * 0.16, size: m * 0.085, alpha: 0.85 },
+      { type: 'blob',   x: W * 0.05, y: H * 0.92, size: m * 0.1, alpha: 0.75 },
+      { type: 'flower', x: W * 0.95, y: H * 0.88, size: m * 0.075, alpha: 0.8 },
+    ];
+    for (const a of cands){
+      const r = a.size * 1.5;
+      if (a.x + r > keepOut.x0 && a.x - r < keepOut.x1 && a.y + r > keepOut.y0 && a.y - r < keepOut.y1) continue;
+      a.phase = rand(0, 6);
+      anchors.push(a);
+    }
+  }
+  function spawnGrains(){
+    grains = [];
+    const count = Math.round((W * H) / 6200);
+    for (let i = 0; i < count; i++){
+      const x = rand(0, W), y = rand(0, H);
+      if (x > keepOut.x0 && x < keepOut.x1 && y > keepOut.y0 && y < keepOut.y1) continue;
+      grains.push({ x, y, r: rand(0.4, 1.2), alpha: rand(0.03, 0.07), color: Math.random() < 0.75 ? C.ink : C.mustard });
+    }
+  }
+  function spawnShape({ initial = false, x, y, ambient = true } = {}){
+    const sx = x != null ? x : rand(0, W);
+    const sy = y != null ? y : (initial ? rand(0, H) : H + rand(20, 60));
+    shapes.push({
+      type: TYPES[Math.floor(Math.random() * TYPES.length)],
+      x: sx, y: sy, size: rand(16, 38),
+      vy: rand(0.25, 0.55), vx: (Math.random() - 0.5) * 0.06,
+      rot: rand(-0.3, 0.3), phase: rand(0, Math.PI * 2),
+      alpha: rand(0.62, 0.95), ambient,
+    });
+  }
+  function bounceShape(d){
+    const r = d.size * 1.6;
+    const x = d.x, y = d.y;
+    if (!(x > keepOut.x0 - r && x < keepOut.x1 + r && y > keepOut.y0 - r && y < keepOut.y1 + r)) return;
+    const left = x - (keepOut.x0 - r), right = (keepOut.x1 + r) - x;
+    const top = y - (keepOut.y0 - r), bottom = (keepOut.y1 + r) - y;
+    const m = Math.min(left, right, top, bottom);
+    if (m === left){ d.x = keepOut.x0 - r; d.vx = Math.abs(d.vx) + 0.03; }
+    else if (m === right){ d.x = keepOut.x1 + r; d.vx = -Math.abs(d.vx) - 0.03; }
+    else if (m === top){ d.y = keepOut.y0 - r; d.vy = Math.abs(d.vy) + 0.03; }
+    else { d.y = keepOut.y1 + r; d.vy = -Math.abs(d.vy) - 0.03; }
+    d.rot += 0.05;
+  }
+  function drawShape(d, t){
+    const bob = Math.sin(t * 0.00025 + d.phase) * 0.7;
+    ctx.save();
+    ctx.translate(d.x, d.y + bob);
+    ctx.rotate(d.rot + Math.sin(t * 0.00018 + d.phase) * 0.12);
+    ctx.globalAlpha = d.alpha;
+    SHAPES[d.type](ctx, d.size);
+    ctx.restore();
+  }
+  let frameCount = 0;
+  function drawFrame(t){
+    if (++frameCount % 150 === 1) keepOut = computeKeepOut();
+    ctx.clearRect(0, 0, W, H);
+    drawFields(t);
+    drawHills(t);
+    // 四角构图元素：缓慢浮动呼吸
+    for (const a of anchors){
+      const bob = Math.sin(t * 0.00022 + a.phase) * 4;
+      ctx.save();
+      ctx.translate(a.x, a.y + bob);
+      ctx.rotate(Math.sin(t * 0.00015 + a.phase) * 0.06);
+      ctx.globalAlpha = a.alpha * (0.92 + 0.08 * Math.sin(t * 0.0003 + a.phase));
+      SHAPES[a.type](ctx, a.size);
+      ctx.restore();
+    }
+    // 纸张颗粒
+    for (const g of grains){
+      ctx.globalAlpha = g.alpha; ctx.fillStyle = g.color;
+      ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // 漂浮插画图形：向上飘、轻摆，碰到中央卡片会被弹开
+    for (let i = shapes.length - 1; i >= 0; i--){
+      const d = shapes[i];
+      if (!reduced){
+        d.y -= d.vy; d.x += d.vx;
+        if (d.y < -60 || d.x < -60 || d.x > W + 60){ shapes.splice(i, 1); if (d.ambient) spawnShape(); continue; }
+        bounceShape(d);
+      }
+      drawShape(d, t);
+    }
+  }
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    keepOut = computeKeepOut();
+    shapes = []; fields = []; anchors = [];
+    spawnFields();
+    spawnGrains();
+    spawnAnchors();
+    for (let i = 0; i < 13; i++) spawnShape({ initial: true });
+  }
+  function loop(now){ drawFrame(now); requestAnimationFrame(loop); }
+  window.addEventListener("resize", resize);
+  resize();
+  if (reduced){ drawFrame(0); } else { requestAnimationFrame(loop); }
+  // 点击任意处：绽放一个编辑插画小图形
+  window.addEventListener("pointerdown", (e) => {
+    spawnShape({ x: e.clientX, y: e.clientY, ambient: false });
+  }, { passive: true });
+
+  /* ---------- 自检 ---------- */
+  if (params.get("selftest") != null){
+    const r = runSelfTest();
+    const box = $("#selftestBody");
+    box.innerHTML = r.checks.map(c =>
+      "<div class=\"" + (c.pass ? "ok" : "bad") + "\">" + (c.pass ? "✓" : "✗") + " " + c.name + "</div><div style='color:#8a6f5a'>" + c.detail + "</div>"
+    ).join("");
+    $("#selftest").style.display = "block";
+    console.table(r.checks);
+  }
+
+  /* ---------- 启动 ---------- */
+  render();
+  setSound(soundOn);
+})();
+</script>
+</body>
+</html>
