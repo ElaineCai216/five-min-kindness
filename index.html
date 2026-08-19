@@ -57,7 +57,7 @@
   }
   .chip.other{ background:var(--other); } .chip.world{ background:var(--world); } .chip.self{ background:var(--self); }
 
-  #text{ font-size:22px; line-height:1.75; letter-spacing:1px; color:var(--ink); min-height:120px;
+  #text{ font-size:22px; line-height:1.8; letter-spacing:1px; color:var(--ink); min-height:132px;
     display:flex; align-items:center; justify-content:center; }
   #text .ch{ display:inline-block; opacity:0; transform:translateY(10px); animation:in .5s ease forwards; }
   @keyframes in{ to{ opacity:1; transform:none; } }
@@ -87,13 +87,13 @@
   .sub button:hover{ color:var(--terra); border-bottom-color:var(--mustard); }
 
   #stamp{
-    position:absolute; left:50%; top:44%; transform:translate(-50%,-50%) rotate(-12deg) scale(2.4); opacity:0;
-    pointer-events:none; width:132px; height:132px; z-index:5;
+    position:absolute; bottom:12px; right:14px; transform:rotate(-8deg) scale(2.2); opacity:0;
+    pointer-events:none; width:84px; height:84px; z-index:5;
   }
   #stamp.show{ animation:stamp .55s cubic-bezier(.2,.9,.3,1.2) forwards; }
-  @keyframes stamp{ 0%{ opacity:0; transform:translate(-50%,-50%) rotate(-12deg) scale(2.4); }
-    55%{ opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(.94); }
-    100%{ opacity:1; transform:translate(-50%,-50%) rotate(-12deg) scale(1); } }
+  @keyframes stamp{ 0%{ opacity:0; transform:rotate(-11deg) scale(2.2); }
+    55%{ opacity:1; transform:rotate(-6deg) scale(.94); }
+    100%{ opacity:1; transform:rotate(-8deg) scale(1); } }
   #stamp .ring{ fill:none; stroke:var(--outline); stroke-width:3.5; stroke-dasharray:340; stroke-dashoffset:340; }
   #stamp.show .ring{ animation:draw .5s .12s ease forwards; }
   #stamp text{ font-family:inherit; fill:var(--outline); font-size:15px; letter-spacing:3px; }
@@ -123,8 +123,9 @@
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
   @media (max-width:420px){
-    #text{ font-size:19px; min-height:104px; }
+    #text{ font-size:19px; min-height:118px; }
     #card{ padding:26px 20px 22px; }
+    #stamp{ bottom:8px; right:8px; width:62px; height:62px; }
   }
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration:.01s !important; transition-duration:.01s !important; }
