@@ -664,286 +664,203 @@ function runSelfTest(){
     b.addEventListener("pointerdown", sfxClick);
   });
 
-  /* ---------- 动态编辑插画背景 ----------
-     扁平色块 + 粗描边（参考 Editorial Illustration）：太阳 / 云朵 / 新芽 / 浇水壶 / 爱心 /
-     茶杯 / 信封 / 星星 / 花 / 叶子 / 色块，漂浮摆动；远景小山与色块缓慢呼吸；
-     中央卡片是禁区，图形碰到会弹开。 */
+  /* ---------- 暖纸光尘互动背景 ----------
+     光标光晕跟随、光点追逐光标、点击光爆 + 涟漪；卡片为禁区，光点不进入。 */
   const canvas = $("#ink");
   const ctx = canvas.getContext("2d");
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let W = 0, H = 0, dpr = 1;
-  const C = {
-    ink: "#3d3d30", mustard: "#e3b34a", olive: "#8f923f", sage: "#8fa876",
-    terra: "#c97b54", mauve: "#b08ab0", blue: "#8fa8bc", rose: "#d98a8a",
-    cream: "#fdfbf3", beige: "#e8c9a0",
-  };
   const rand = (a, b) => a + Math.random() * (b - a);
-  let shapes = [], fields = [], grains = [], anchors = [];
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // —— 可调参数 ——
+  const CFG = {
+    areaPerParticle: 12000, minParticles: 46, maxParticles: 100,
+    sizeMin: 1.0, sizeMax: 3.0,
+    drift: 0.12, wobble: 0.6,
+    glowRadius: 170, glowAlpha: 0.22,
+    glowSpeedBoost: 0.35, glowAlphaBoost: 0.14,
+    attractRadius: 180, attractForce: 0.18, attractMaxSpeed: 2.0, attractAlpha: 0.9,
+    burstCount: 16, burstSpeed: 3.0, burstLife: 60, burstFade: 0.96,
+    rippleCount: 2, rippleDur: 0.9, rippleMaxR: 100,
+    trailLife: 36, trailAlpha: 0.08,
+  };
+  const LIGHTS = ["#e9b64a", "#f2cd7a", "#ffe9b8", "#e3b34a"];
+  const GOLD = "#e3b34a";
+
+  let particles = [], bursts = [], ripples = [], trail = [], grains = [];
   let keepOut = { x0: 0, y0: 0, x1: 0, y1: 0 };
+  let mouse = { x: -9999, y: -9999, gx: -9999, gy: -9999, speed: 0, active: false };
+  let lastT = 0, frameCount = 0;
 
   function computeKeepOut(){
     const r = $("#card").getBoundingClientRect();
     const m = Math.max(16, Math.min(W, H) * 0.03);
     return { x0: r.left - m, y0: r.top - m, x1: r.right + m, y1: r.bottom + m };
   }
-
-  const SHAPES = {
-    sun(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineCap = "round"; c.lineJoin = "round";
-      c.fillStyle = C.mustard; c.strokeStyle = C.ink;
-      for (let i = 0; i < 8; i++){
-        c.save(); c.rotate(i * Math.PI / 4);
-        c.beginPath();
-        c.moveTo(s * 1.12, -s * 0.17); c.lineTo(s * 1.58, -s * 0.17);
-        c.lineTo(s * 1.58, s * 0.17); c.lineTo(s * 1.12, s * 0.17);
-        c.closePath(); c.fill(); c.stroke();
-        c.restore();
-      }
-      c.beginPath(); c.arc(0, 0, s, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.restore();
-    },
-    cloud(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineJoin = "round"; c.lineCap = "round";
-      c.fillStyle = "#f2efe2"; c.strokeStyle = C.ink;
-      c.beginPath();
-      c.arc(-s * 0.45, s * 0.08, s * 0.4, Math.PI * 0.5, Math.PI * 1.5);
-      c.arc(-s * 0.06, -s * 0.26, s * 0.52, Math.PI * 0.6, Math.PI * 1.45);
-      c.arc(s * 0.4, -s * 0.08, s * 0.4, Math.PI * 0.75, Math.PI * 1.6);
-      c.arc(s * 0.62, s * 0.18, s * 0.32, Math.PI * 0.9, Math.PI * 1.9);
-      c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    },
-    sprout(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.14); c.lineCap = "round"; c.lineJoin = "round";
-      c.strokeStyle = C.ink;
-      c.beginPath(); c.moveTo(0, s); c.quadraticCurveTo(-s * 0.1, -s * 0.1, s * 0.05, -s * 0.85); c.stroke();
-      c.fillStyle = C.olive;
-      c.beginPath(); c.moveTo(s * 0.05, -s * 0.8);
-      c.quadraticCurveTo(s * 0.9, -s * 0.75, s * 0.95, -s * 0.12);
-      c.quadraticCurveTo(s * 0.45, -s * 0.15, s * 0.05, -s * 0.5);
-      c.closePath(); c.fill(); c.stroke();
-      c.beginPath(); c.moveTo(s * 0.05, -s * 0.75);
-      c.quadraticCurveTo(-s * 0.7, -s * 0.95, -s * 0.95, -s * 0.35);
-      c.quadraticCurveTo(-s * 0.45, -s * 0.2, s * 0.05, -s * 0.42);
-      c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    },
-    can(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round"; c.lineCap = "round";
-      c.fillStyle = C.terra; c.strokeStyle = C.ink;
-      c.beginPath();
-      c.moveTo(-s * 0.7, -s * 0.05); c.lineTo(s * 0.5, -s * 0.05);
-      c.lineTo(s * 0.55, s * 0.45); c.lineTo(-s * 0.65, s * 0.5);
-      c.closePath(); c.fill(); c.stroke();
-      c.beginPath();
-      c.moveTo(s * 0.5, -s * 0.05); c.lineTo(s * 0.95, -s * 0.35);
-      c.lineTo(s * 1.0, -s * 0.15); c.lineTo(s * 0.55, s * 0.15);
-      c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = C.blue;
-      c.beginPath(); c.arc(s * 1.02, -s * 0.38, s * 0.1, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.beginPath(); c.arc(-s * 0.35, -s * 0.1, s * 0.32, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
-      c.restore();
-    },
-    heart(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round";
-      c.fillStyle = C.rose; c.strokeStyle = C.ink;
-      c.beginPath();
-      c.moveTo(0, s * 0.85);
-      c.bezierCurveTo(-s * 1.15, 0, -s * 0.7, -s * 0.95, 0, -s * 0.3);
-      c.bezierCurveTo(s * 0.7, -s * 0.95, s * 1.15, 0, 0, s * 0.85);
-      c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    },
-    cup(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineJoin = "round"; c.lineCap = "round";
-      c.fillStyle = C.blue; c.strokeStyle = C.ink;
-      c.beginPath();
-      c.moveTo(-s * 0.55, -s * 0.5); c.lineTo(s * 0.55, -s * 0.5);
-      c.lineTo(s * 0.4, s * 0.5); c.lineTo(-s * 0.4, s * 0.5);
-      c.closePath(); c.fill(); c.stroke();
-      c.beginPath(); c.arc(s * 0.55, 0, s * 0.22, -Math.PI * 0.45, Math.PI * 0.45); c.stroke();
-      c.lineWidth = Math.max(2, s * 0.1);
-      c.beginPath(); c.moveTo(-s * 0.15, -s * 0.75); c.quadraticCurveTo(-s * 0.28, -s * 0.95, -s * 0.12, -s * 1.1); c.stroke();
-      c.beginPath(); c.moveTo(s * 0.15, -s * 0.75); c.quadraticCurveTo(s * 0.02, -s * 0.95, s * 0.18, -s * 1.1); c.stroke();
-      c.restore();
-    },
-    mail(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.11); c.lineJoin = "round"; c.lineCap = "round";
-      c.fillStyle = C.beige; c.strokeStyle = C.ink;
-      c.beginPath();
-      c.moveTo(-s, -s * 0.6); c.lineTo(s, -s * 0.6); c.lineTo(s, s * 0.6); c.lineTo(-s, s * 0.6);
-      c.closePath(); c.fill(); c.stroke();
-      c.beginPath(); c.moveTo(-s, -s * 0.6); c.lineTo(0, -s * 0.05); c.lineTo(s, -s * 0.6); c.stroke();
-      c.beginPath(); c.moveTo(-s, s * 0.6); c.lineTo(-s * 0.15, 0); c.moveTo(s, s * 0.6); c.lineTo(s * 0.15, 0); c.stroke();
-      c.restore();
-    },
-    star(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round";
-      c.fillStyle = C.mustard; c.strokeStyle = C.ink;
-      c.beginPath();
-      for (let i = 0; i < 10; i++){
-        const r = i % 2 === 0 ? s : s * 0.45;
-        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-        i === 0 ? c.moveTo(Math.cos(a) * r, Math.sin(a) * r) : c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-      }
-      c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    },
-    flower(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.12); c.lineJoin = "round";
-      c.fillStyle = C.mauve; c.strokeStyle = C.ink;
-      for (let i = 0; i < 5; i++){
-        c.save(); c.rotate(i * Math.PI * 2 / 5);
-        c.beginPath(); c.ellipse(0, -s * 0.62, s * 0.3, s * 0.42, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-        c.restore();
-      }
-      c.fillStyle = C.mustard;
-      c.beginPath(); c.arc(0, 0, s * 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.restore();
-    },
-    leaf(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round"; c.lineCap = "round";
-      c.fillStyle = C.olive; c.strokeStyle = C.ink;
-      c.beginPath();
-      c.moveTo(-s, 0); c.quadraticCurveTo(-s * 0.2, -s * 1.1, s * 0.9, -s * 0.15);
-      c.quadraticCurveTo(0, s * 0.9, -s, 0);
-      c.closePath(); c.fill(); c.stroke();
-      c.beginPath(); c.moveTo(-s * 0.75, s * 0.05); c.quadraticCurveTo(0, 0, s * 0.7, -s * 0.05); c.stroke();
-      c.restore();
-    },
-    blob(c, s){
-      c.save(); c.lineWidth = Math.max(2.5, s * 0.13); c.lineJoin = "round";
-      c.fillStyle = C.sage; c.strokeStyle = C.ink;
-      c.beginPath();
-      const pts = 7;
-      for (let i = 0; i < pts; i++){
-        const a = (i / pts) * Math.PI * 2;
-        const r = s * (0.8 + 0.3 * Math.sin(i * 2.7));
-        i === 0 ? c.moveTo(Math.cos(a) * r, Math.sin(a) * r) : c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-      }
-      c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    },
-  };
-  const TYPES = Object.keys(SHAPES);
-
-  function spawnFields(){
-    const m = Math.min(W, H);
-    fields = [
-      { x: W * 0.1, y: H * 0.12, r: m * 0.36, color: C.mustard, alpha: 0.10, phase: rand(0, 6) },
-      { x: W * 0.92, y: H * 0.88, r: m * 0.4, color: C.blue, alpha: 0.09, phase: rand(0, 6) },
-      { x: W * 0.82, y: H * 0.16, r: m * 0.2, color: C.mauve, alpha: 0.07, phase: rand(0, 6) },
-      { x: W * 0.12, y: H * 0.86, r: m * 0.24, color: C.sage, alpha: 0.08, phase: rand(0, 6) },
-    ];
+  function inKeepOut(x, y, r){
+    return x + r > keepOut.x0 && x - r < keepOut.x1 && y + r > keepOut.y0 && y - r < keepOut.y1;
   }
-  function drawFields(t){
-    for (const f of fields){
-      ctx.globalAlpha = f.alpha * (0.85 + 0.15 * Math.sin(t * 0.0004 + f.phase));
-      ctx.fillStyle = f.color;
-      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+  function spawnParticle(){
+    for (let i = 0; i < 24; i++){
+      const x = rand(0, W), y = rand(0, H);
+      if (!inKeepOut(x, y, 6)){
+        particles.push({
+          x, y, vx: rand(-CFG.drift, CFG.drift), vy: rand(-CFG.drift, CFG.drift),
+          size: rand(CFG.sizeMin, CFG.sizeMax), phase: rand(0, Math.PI * 2),
+          color: LIGHTS[Math.floor(Math.random() * LIGHTS.length)], alpha: rand(0.3, 0.7),
+        });
+        return;
+      }
     }
-    ctx.globalAlpha = 1;
+    const side = Math.random() < 0.5;
+    particles.push({
+      x: side ? rand(4, Math.max(5, keepOut.x0 - 8)) : rand(Math.min(W - 5, keepOut.x1 + 8), W - 4),
+      y: rand(0, H), vx: rand(-CFG.drift, CFG.drift), vy: rand(-CFG.drift, CFG.drift),
+      size: rand(CFG.sizeMin, CFG.sizeMax), phase: rand(0, Math.PI * 2),
+      color: LIGHTS[Math.floor(Math.random() * LIGHTS.length)], alpha: rand(0.3, 0.7),
+    });
   }
-  // 远景小山：扁平色块，缓慢左右摆动
-  function drawHills(t){
-    const sway = Math.sin(t * 0.0002) * 8;
-    ctx.fillStyle = C.olive; ctx.globalAlpha = 0.16;
-    ctx.beginPath(); ctx.arc(W * 0.26 + sway * 0.5, H + 70, W * 0.5, Math.PI, 0); ctx.fill();
-    ctx.beginPath(); ctx.arc(W * 0.86 - sway * 0.5, H + 100, W * 0.55, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = C.sage; ctx.globalAlpha = 0.22;
-    ctx.beginPath(); ctx.arc(W * 0.55 + sway, H + 50, W * 0.42, Math.PI, 0); ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-  function spawnAnchors(){
-    anchors = [];
-    const m = Math.min(W, H);
-    const cands = [
-      { type: 'sun',    x: W * 0.9, y: H * 0.14, size: m * 0.11, alpha: 0.95 },
-      { type: 'cloud',  x: W * 0.1, y: H * 0.16, size: m * 0.085, alpha: 0.85 },
-      { type: 'blob',   x: W * 0.05, y: H * 0.92, size: m * 0.1, alpha: 0.75 },
-      { type: 'flower', x: W * 0.95, y: H * 0.88, size: m * 0.075, alpha: 0.8 },
-    ];
-    for (const a of cands){
-      const r = a.size * 1.5;
-      if (a.x + r > keepOut.x0 && a.x - r < keepOut.x1 && a.y + r > keepOut.y0 && a.y - r < keepOut.y1) continue;
-      a.phase = rand(0, 6);
-      anchors.push(a);
-    }
+  function pushOut(p){
+    const r = p.size * 3;
+    if (!inKeepOut(p.x, p.y, r)) return;
+    const left = p.x - (keepOut.x0 - r), right = (keepOut.x1 + r) - p.x;
+    const top = p.y - (keepOut.y0 - r), bottom = (keepOut.y1 + r) - p.y;
+    const m = Math.min(left, right, top, bottom);
+    if (m === left){ p.x = keepOut.x0 - r; p.vx = Math.abs(p.vx) + 0.02; }
+    else if (m === right){ p.x = keepOut.x1 + r; p.vx = -Math.abs(p.vx) - 0.02; }
+    else if (m === top){ p.y = keepOut.y0 - r; p.vy = Math.abs(p.vy) + 0.02; }
+    else { p.y = keepOut.y1 + r; p.vy = -Math.abs(p.vy) - 0.02; }
   }
   function spawnGrains(){
     grains = [];
-    const count = Math.round((W * H) / 6200);
+    const count = Math.round((W * H) / 9000);
     for (let i = 0; i < count; i++){
       const x = rand(0, W), y = rand(0, H);
-      if (x > keepOut.x0 && x < keepOut.x1 && y > keepOut.y0 && y < keepOut.y1) continue;
-      grains.push({ x, y, r: rand(0.4, 1.2), alpha: rand(0.03, 0.07), color: Math.random() < 0.75 ? C.ink : C.mustard });
+      if (inKeepOut(x, y, 4)) continue;
+      grains.push({ x, y, r: rand(0.4, 1.1), alpha: rand(0.02, 0.045), color: Math.random() < 0.75 ? "#6b5a40" : GOLD });
     }
   }
-  function spawnShape({ initial = false, x, y, ambient = true } = {}){
-    const sx = x != null ? x : rand(0, W);
-    const sy = y != null ? y : (initial ? rand(0, H) : H + rand(20, 60));
-    shapes.push({
-      type: TYPES[Math.floor(Math.random() * TYPES.length)],
-      x: sx, y: sy, size: rand(16, 38),
-      vy: rand(0.25, 0.55), vx: (Math.random() - 0.5) * 0.06,
-      rot: rand(-0.3, 0.3), phase: rand(0, Math.PI * 2),
-      alpha: rand(0.62, 0.95), ambient,
-    });
+  function spawnBurst(x, y){
+    if (inKeepOut(x, y, 8)) return; // 卡片区不迸发，保持文字区纯净
+    const n = CFG.burstCount;
+    for (let i = 0; i < n; i++){
+      const a = (i / n) * Math.PI * 2 + rand(-0.25, 0.25);
+      const sp = rand(CFG.burstSpeed * 0.5, CFG.burstSpeed);
+      bursts.push({
+        x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: CFG.burstLife * rand(0.7, 1.1), maxLife: CFG.burstLife,
+        size: rand(1.2, 2.6), color: LIGHTS[Math.floor(Math.random() * LIGHTS.length)],
+      });
+    }
+    for (let i = 0; i < CFG.rippleCount; i++){
+      ripples.push({ x, y, t: 0, dur: CFG.rippleDur, delay: i * 0.12, maxR: CFG.rippleMaxR * (1 + i * 0.4) });
+    }
   }
-  function bounceShape(d){
-    const r = d.size * 1.6;
-    const x = d.x, y = d.y;
-    if (!(x > keepOut.x0 - r && x < keepOut.x1 + r && y > keepOut.y0 - r && y < keepOut.y1 + r)) return;
-    const left = x - (keepOut.x0 - r), right = (keepOut.x1 + r) - x;
-    const top = y - (keepOut.y0 - r), bottom = (keepOut.y1 + r) - y;
-    const m = Math.min(left, right, top, bottom);
-    if (m === left){ d.x = keepOut.x0 - r; d.vx = Math.abs(d.vx) + 0.03; }
-    else if (m === right){ d.x = keepOut.x1 + r; d.vx = -Math.abs(d.vx) - 0.03; }
-    else if (m === top){ d.y = keepOut.y0 - r; d.vy = Math.abs(d.vy) + 0.03; }
-    else { d.y = keepOut.y1 + r; d.vy = -Math.abs(d.vy) - 0.03; }
-    d.rot += 0.05;
+  function drawGlow(x, y, r, alpha){
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, "rgba(227,179,74," + alpha + ")");
+    g.addColorStop(0.5, "rgba(242,205,122," + (alpha * 0.45) + ")");
+    g.addColorStop(1, "rgba(242,205,122,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
   }
-  function drawShape(d, t){
-    const bob = Math.sin(t * 0.00025 + d.phase) * 0.7;
-    ctx.save();
-    ctx.translate(d.x, d.y + bob);
-    ctx.rotate(d.rot + Math.sin(t * 0.00018 + d.phase) * 0.12);
-    ctx.globalAlpha = d.alpha;
-    SHAPES[d.type](ctx, d.size);
-    ctx.restore();
+  function updateParticles(dt){
+    for (const p of particles){
+      p.x += p.vx * dt;
+      p.y += p.vy * dt + Math.sin(performance.now() * 0.0006 + p.phase) * CFG.wobble * 0.05;
+      if (p.x < -4) p.x = W + 4; else if (p.x > W + 4) p.x = -4;
+      if (p.y < -4) p.y = H + 4; else if (p.y > H + 4) p.y = -4;
+      if (mouse.active){
+        const dx = mouse.x - p.x, dy = mouse.y - p.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < CFG.attractRadius * CFG.attractRadius && d2 > 1){
+          const d = Math.sqrt(d2);
+          p.vx += (dx / d) * CFG.attractForce * dt;
+          p.vy += (dy / d) * CFG.attractForce * dt;
+          const sp = Math.hypot(p.vx, p.vy);
+          if (sp > CFG.attractMaxSpeed){ p.vx = (p.vx / sp) * CFG.attractMaxSpeed; p.vy = (p.vy / sp) * CFG.attractMaxSpeed; }
+        }
+      }
+      pushOut(p);
+    }
   }
-  let frameCount = 0;
-  function drawFrame(t){
+  function drawFrame(now){
+    const dt = reduced ? 1 : clamp((now - (lastT || now)) / 16.7, 0.25, 2);
+    lastT = now;
     if (++frameCount % 150 === 1) keepOut = computeKeepOut();
     ctx.clearRect(0, 0, W, H);
-    drawFields(t);
-    drawHills(t);
-    // 四角构图元素：缓慢浮动呼吸
-    for (const a of anchors){
-      const bob = Math.sin(t * 0.00022 + a.phase) * 4;
-      ctx.save();
-      ctx.translate(a.x, a.y + bob);
-      ctx.rotate(Math.sin(t * 0.00015 + a.phase) * 0.06);
-      ctx.globalAlpha = a.alpha * (0.92 + 0.08 * Math.sin(t * 0.0003 + a.phase));
-      SHAPES[a.type](ctx, a.size);
-      ctx.restore();
-    }
-    // 纸张颗粒
+    // 极淡纸纹
     for (const g of grains){
       ctx.globalAlpha = g.alpha; ctx.fillStyle = g.color;
       ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
-    // 漂浮插画图形：向上飘、轻摆，碰到中央卡片会被弹开
-    for (let i = shapes.length - 1; i >= 0; i--){
-      const d = shapes[i];
-      if (!reduced){
-        d.y -= d.vy; d.x += d.vx;
-        if (d.y < -60 || d.x < -60 || d.x > W + 60){ shapes.splice(i, 1); if (d.ambient) spawnShape(); continue; }
-        bounceShape(d);
+    if (!reduced){
+      if (mouse.active){
+        mouse.gx = lerp(mouse.gx, mouse.x, 0.16);
+        mouse.gy = lerp(mouse.gy, mouse.y, 0.16);
       }
-      drawShape(d, t);
+      mouse.speed = lerp(mouse.speed, 0, 0.05);
+      updateParticles(dt);
+      // 光标拖尾
+      if (mouse.active){
+        trail.push({ x: mouse.gx, y: mouse.gy, life: CFG.trailLife, maxLife: CFG.trailLife, size: rand(16, 30), alpha: CFG.trailAlpha });
+        if (trail.length > 40) trail.shift();
+      }
+      for (let i = trail.length - 1; i >= 0; i--){
+        const tr = trail[i];
+        tr.life -= dt;
+        if (tr.life <= 0){ trail.splice(i, 1); continue; }
+        drawGlow(tr.x, tr.y, tr.size, tr.alpha * (tr.life / tr.maxLife));
+      }
+      // 光标光晕（随速度增强）
+      if (mouse.active){
+        const boost = mouse.speed * CFG.glowSpeedBoost;
+        drawGlow(mouse.gx, mouse.gy, CFG.glowRadius + boost, CFG.glowAlpha + Math.min(CFG.glowAlphaBoost, boost * 0.03));
+      }
+      // 涟漪
+      for (let i = ripples.length - 1; i >= 0; i--){
+        const rp = ripples[i];
+        rp.t += dt / (rp.dur * 60);
+        if (rp.t >= 1){ ripples.splice(i, 1); continue; }
+        const e = 1 - Math.pow(1 - rp.t, 3);
+        ctx.globalAlpha = (1 - e) * 0.6;
+        ctx.strokeStyle = GOLD; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(rp.x, rp.y, 6 + e * rp.maxR, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // 光爆粒子
+      for (let i = bursts.length - 1; i >= 0; i--){
+        const b = bursts[i];
+        b.x += b.vx * dt; b.y += b.vy * dt;
+        b.vx *= CFG.burstFade; b.vy *= CFG.burstFade;
+        b.life -= dt;
+        if (b.life <= 0){ bursts.splice(i, 1); continue; }
+        ctx.globalAlpha = Math.max(0, b.life / b.maxLife) * 0.9;
+        ctx.fillStyle = b.color;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     }
+    // 光点尘埃
+    for (const p of particles){
+      const twinkle = 0.75 + 0.25 * Math.sin(now * 0.0012 + p.phase * 2);
+      let a = p.alpha * twinkle;
+      if (mouse.active){
+        const d2 = (p.x - mouse.x) * (p.x - mouse.x) + (p.y - mouse.y) * (p.y - mouse.y);
+        if (d2 < CFG.attractRadius * CFG.attractRadius) a = Math.max(a, CFG.attractAlpha);
+      }
+      ctx.globalAlpha = a;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      if (p.size > 1.8){
+        ctx.globalAlpha = a * 0.25;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2.6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
   }
   function resize(){
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -952,20 +869,29 @@ function runSelfTest(){
     canvas.style.width = W + "px"; canvas.style.height = H + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     keepOut = computeKeepOut();
-    shapes = []; fields = []; anchors = [];
-    spawnFields();
+    particles = []; bursts = []; ripples = []; trail = [];
     spawnGrains();
-    spawnAnchors();
-    for (let i = 0; i < 13; i++) spawnShape({ initial: true });
+    const n = clamp(Math.round((W * H) / CFG.areaPerParticle), CFG.minParticles, CFG.maxParticles);
+    for (let i = 0; i < n; i++) spawnParticle();
   }
   function loop(now){ drawFrame(now); requestAnimationFrame(loop); }
   window.addEventListener("resize", resize);
   resize();
   if (reduced){ drawFrame(0); } else { requestAnimationFrame(loop); }
-  // 点击任意处：绽放一个编辑插画小图形
-  window.addEventListener("pointerdown", (e) => {
-    spawnShape({ x: e.clientX, y: e.clientY, ambient: false });
+
+  // 指针互动（鼠标 / 触摸统一）
+  window.addEventListener("pointermove", (e) => {
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    mouse.active = true;
+    const s = Math.hypot(e.movementX || 0, e.movementY || 0);
+    mouse.speed = lerp(mouse.speed, Math.min(s, 40) / 40, 0.3);
   }, { passive: true });
+  window.addEventListener("pointerdown", (e) => {
+    mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+    spawnBurst(e.clientX, e.clientY);
+  }, { passive: true });
+  window.addEventListener("pointerleave", () => { mouse.active = false; mouse.speed = 0; });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) mouse.active = false; });
 
   /* ---------- 自检 ---------- */
   if (params.get("selftest") != null){
